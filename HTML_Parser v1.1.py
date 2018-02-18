@@ -20,6 +20,10 @@ from lxml import etree
 if __name__ == '__main__':
     html = open("C:\\Users\\ThinkPad\\Desktop\\oxford\\accident noun.html", "r", encoding="utf-8")
     page = etree.HTML(html.read())
+    
+    # 问题的根源在于这句，这里的SN-GS没选择好，应该按照这样的路径选择出来：oald/entry/h-g/sn-gs/sn-g/x-gs/x-g
+    # 详细的原因在evernote.com里边有写了。2月19日的笔记。我现在研究透网页的标签结构，这个程序就不是这么写了。
+    # 可以做到直接选择到所需要的标签节点，不需要遍历了。
     SN_GS_list = page.xpath("//span[@class='sn-gs']") # 我想起来这个返回有好几个'sn-gs'. 第一个才是真正的解释。
     regular_definitions = SN_GS_list[0]
 
