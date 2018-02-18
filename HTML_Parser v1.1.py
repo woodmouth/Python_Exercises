@@ -8,7 +8,12 @@ from lxml import etree
 # https://www.oxfordlearnersdictionaries.com/us/definition/english/accident?q=accident
 # 现在我正在尝试提取第一个解释和解释下的例句。发现一些很奇怪的bugs。有些例句被跳过了。具体是第二到第四个例句。
 # 又要研究HTML的源代码。
-# 的确是，第二个解释，前头的三个例句也被跳过了。不清楚为什么会这样。
+# 的确是，第二个解释，前两个例句也被跳过了。不清楚为什么会这样。
+# 对于第一个解释，sampleSentences的期望长度应该是11，因为有11个例句.
+# 现在知道原因了，当前节点是<span class="x-gs"/>
+# 有些例句是<span class="x-gs"><span class="x-g"><span class="x">...
+# 但是有些是<span class="x-gs"><span class="x-g"><span class="rx-g"><span class="x">
+# 所以层级不一样。所以还是调整xpath的语句。
 
 
 
@@ -22,12 +27,13 @@ if __name__ == '__main__':
     for definition in definitions:
         str0 = definition.xpath('string(.)')
         print("definition: %s" % (str0))
-        sibling = definition.getnext()
+        sibling = definition.getnext() # 我期望这个getnext()语句就是返回下一个节点。
 
         # <span class='x'/>就是例句。
-        sampleSentences = sibling.xpath('./span/span[@class = "x"]') # 怎么把class="x-gs"也匹配上了呢？
+        # sampleSentences = sibling.xpath('./span/span[@class = "x"]') # 怎么把class="x-gs"也匹配上了呢？#这个匹配会遗漏例句
+        sampleSentences = sibling.xpath('//span[@class = "x"]') #直接匹配到例句的节点。这个好点。
 
-        # 现在regular_definition[0]只有常规的解释。
+        # 现在regular_definitions只有常规的解释。
         for sample in sampleSentences:
             print("-----------------------------------------------")
             print("etree.tostring: %s" % (etree.tostring(sample)))
