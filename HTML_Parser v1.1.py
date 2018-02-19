@@ -24,32 +24,31 @@ if __name__ == '__main__':
     # 问题的根源在于这句，这里的SN-GS没选择好，应该按照这样的路径选择出来：oald/entry/h-g/sn-gs/sn-g/x-gs/x-g
     # 详细的原因在evernote.com里边有写了。2月19日的笔记。我现在研究透网页的标签结构，这个程序就不是这么写了。
     # 可以做到直接选择到所需要的标签节点，不需要遍历了。
-    entryContent = page.xpath("//div[@id='entryContent']")
+    # entryContent = page.xpath("//div[@id='entryContent']")
 
     SN_GS_list = page.xpath("//div[@id='entryContent']//ol[@class='h-g']/span[@class='sn-gs']") # 我想起来这个返回有好几个'sn-gs'. 第一个才是真正的解释。
     regular_definitions = SN_GS_list[0]
 
-
-
     # 很无语，为什么这里的definition还是6个。明明是2个而已。。。或者我重新构建一个HTML tree。
-    # 现在重新构建HTML树就对了。现在是只有两个解释了。
+    # 现在重新构建HTML树就对了。现在是只有两个解释了。那如果这样的话，我就转变思路去build tree了。
     regular_definitions = etree.HTML(etree.tostring(SN_GS_list[0]))
 
-    definitions = regular_definitions.xpath("//span[@class='def']")
-    for definition in definitions:
-        str0 = definition.xpath('string(.)')
+    definition_sections = regular_definitions.xpath("//li[@class='sn-g']")
+    for section in definition_sections:
+        section_etree = etree.HTML(etree.tostring(section))
+        definition = section_etree.xpath("//span[@class='def']")
+        str0 = definition[0].xpath('string(.)')
         print("definition: %s" % (str0))
-        sibling = definition.getnext() # 我期望这个getnext()语句就是返回下一个节点。
+        # sibling = definition.getnext() # 我期望这个getnext()语句就是返回下一个节点。
 
         # <span class='x'/>就是例句。
         # sampleSentences = sibling.xpath('./span/span[@class = "x"]') # 怎么把class="x-gs"也匹配上了呢？#这个匹配会遗漏例句
         # sampleSentences = sibling.xpath('//span[@class = "x"]') #直接匹配到例句的节点。这个好点。
-        sampleSentences = regular_definitions.xpath("//span[@class=x-g]")
+        sampleSentences = section_etree.xpath("//span[@class='x-g']")
 
         # 现在regular_definitions只有常规的解释。
         for sample in sampleSentences:
             print("-----------------------------------------------")
-            print("etree.tostring: %s" % (etree.tostring(sample)))
             print("sentence : %s" % (sample.xpath('string(.)')))# 很奇怪，为什么第二次迭代还是上次的结果？？？
             # 我觉得下面这样的写法不对，因为如果sample.xpath返回失败，它还是保留以前的值。所以还是需要检查返回值。
             # str1 = sample.xpath('string(//span[@class = "x"])')
@@ -63,4 +62,3 @@ if __name__ == '__main__':
             # 我已经通过调试模式看到sentence的所有的属性，发现tail也不对。我觉得是LXML的解析不对。我现在看看text的定义。
             str2 = "Formatted Sentence: %s " % (formatted_sentence)
             print(str2)
-
