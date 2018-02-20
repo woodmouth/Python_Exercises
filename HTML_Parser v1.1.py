@@ -1,5 +1,7 @@
 import os
 import re
+import mysql.connector
+import datetime
 
 # from bs4 import BeautifulSoup
 from lxml import etree
@@ -39,20 +41,33 @@ class HeadWord:
 
 if __name__ == '__main__':
 
-    html = open("C:\\Users\\ThinkPad\\Desktop\\oxford\\accident noun.html", "r", encoding="utf-8")
+    html = open(r"C:\Users\ThinkPad\Desktop\oxford\accident noun.html", "r", encoding="utf-8")
 
     samples = []
     definition_section = {}  # 用一个简单的数据结构表示词条就足够了。无需定义一个新类，过于复杂。
     headWord = []  # headword是definition_section的列表。
     page = etree.HTML(html.read())
     # 处理网页头部，包括这几个项目，1，是否为Oxford 3000的词汇，2， 单词 3，词性
-    isOxford3000 = True if len(page.xpath("//div[@class='webtop-g']/a[@class='oxford3000']")) == 1 else False
-    headword = page.xpath("//div[@class='webtop-g']/h2[@class='h']")[0].xpath('string(.)')
-    part_of_speach = page.xpath("//div[@class='webtop-g']/span[@class='pos']")[0].xpath('string(.)')
 
-    print("headowrd: %s" % (headword))
-    print("part of speach: %s" % (part_of_speach))
+    # headword的type是lxml.etree._ElementUnicodeResult，居然不是string。hmmmm......
+    headword = page.xpath("//div[@class='webtop-g']/h2[@class='h']")[0].xpath('string(.)')
+    part_of_speech = page.xpath("//div[@class='webtop-g']/span[@class='pos']")[0].xpath('string(.)')
+    isOxford3000 = "T" if len(page.xpath("//div[@class='webtop-g']/a[@class='oxford3000']")) == 1 else "F"
+
+    print("headword: %s" % (headword))
+    print("part of speech: %s" % (part_of_speech))
     print("Is Oxford3000?: %s" % (isOxford3000))
+
+    conn = mysql.connector.connect(user='root', password='123456', database='oxford')
+    cursor = conn.cursor()
+    # 这里有一个问题，是Python的数据类型存放到DB要转化成MySQL可以接受的值。比如这个TIMESTAMP.
+    # 不同的运行环境对于同样的数据类型有不同的实现，所以这样的转换是必须的。这个可以用函数封装起来。
+    sql = "insert into headword(headword, part_of_speech, is_oxford3000, creation_date) values(%s, %s, %s, %s)"
+    # sql = "insert into headword(headword, part_of_speech, is_oxford3000, creation_date) values(%s, %s, %c, %s)" # 这个不对。
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    values = [str(headword), str(part_of_speech), isOxford3000, now]
+    cursor.execute(sql, values)
+    conn.commit()
 
 
 
@@ -108,6 +123,7 @@ if __name__ == '__main__':
 
         headWord.append(definition_section)
 
-print(headWord) # 没想到数据结构这块还是比较简单，已经弄好了。下一步就是保存到数据库中。
+    print(headWord) # 没想到数据结构这块还是比较简单，已经弄好了。下一步就是保存到数据库中。
                 # 现在发现Python的ORM才是大头，我觉得这么麻烦还不如我自己写SQL语句去插入。也不是多大的事。
-
+    cursor.close()
+    conn.close()
