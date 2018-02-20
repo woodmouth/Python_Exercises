@@ -42,9 +42,19 @@ if __name__ == '__main__':
     html = open("C:\\Users\\ThinkPad\\Desktop\\oxford\\accident noun.html", "r", encoding="utf-8")
 
     samples = []
-    definition_section = {}  # 用一个简单的数据结构表示词条就足够了。
+    definition_section = {}  # 用一个简单的数据结构表示词条就足够了。无需定义一个新类，过于复杂。
     headWord = []  # headword是definition_section的列表。
     page = etree.HTML(html.read())
+    # 处理网页头部，包括这几个项目，1，是否为Oxford 3000的词汇，2， 单词 3，词性
+    isOxford3000 = True if len(page.xpath("//div[@class='webtop-g']/a[@class='oxford3000']")) == 1 else False
+    headword = page.xpath("//div[@class='webtop-g']/h2[@class='h']")[0].xpath('string(.)')
+    part_of_speach = page.xpath("//div[@class='webtop-g']/span[@class='pos']")[0].xpath('string(.)')
+
+    print("headowrd: %s" % (headword))
+    print("part of speach: %s" % (part_of_speach))
+    print("Is Oxford3000?: %s" % (isOxford3000))
+
+
 
     # 问题的根源在于下面entryContent的赋值，这里的SN-GS没选择好，应该按照这样的路径选择出来：oald/entry/h-g/sn-gs/sn-g/x-gs/x-g
     # 详细的原因在evernote.com里边有写了。2月19日的笔记。我现在研究透网页的标签结构，这个程序就不是这么写了。
@@ -98,4 +108,6 @@ if __name__ == '__main__':
 
         headWord.append(definition_section)
 
-print(headWord)
+print(headWord) # 没想到数据结构这块还是比较简单，已经弄好了。下一步就是保存到数据库中。
+                # 现在发现Python的ORM才是大头，我觉得这么麻烦还不如我自己写SQL语句去插入。也不是多大的事。
+
